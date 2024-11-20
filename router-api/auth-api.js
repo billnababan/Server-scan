@@ -1,14 +1,14 @@
-const Router = require("express").Router();
+const Auth = require("express").Router();
 
 const { updateUser, deleteUser, updateUserForgetPassword } = require("../controllers/UserController");
 const { getRegister, login, Register, getAllUser, authenticateToken } = require("../controllers/auth");
 
-Router.get("/usersid/:id", getRegister);
+Auth.get("/users/:id", getRegister);
 
-Router.get("/getAll", authenticateToken, getAllUser);
-Router.post("/register", [Register]);
-Router.post("/login", [login]);
-Router.put("/updateUsers/:id", updateUser);
-Router.delete("/deleteUsers/:id", deleteUser);
+Auth.get("/users", authenticateToken, getAllUser);
+Auth.post("/users", [Register]);
+Auth.post("/users", [login]);
+Auth.put("/users/:id", updateUser);
+Auth.delete("/users/:id", deleteUser);
 
-module.exports = Router;
+module.exports = Auth;

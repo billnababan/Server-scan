@@ -1,9 +1,9 @@
-const Router = require("express").Router();
+const Result = require("express").Router();
 const trufflehogController = require("../controllers/newDetect");
 
-Router.post("/deteksi", trufflehogController.detectCredentials);
+Result.post("/deteksi", trufflehogController.detectCredentials);
 
-Router.get("/allrepo", trufflehogController.getAllRepo);
-Router.get("/repoUser/:id", trufflehogController.getRepoByUser);
-Router.delete("/deleterepo/:id", trufflehogController.deleteRepo);
-module.exports = Router;
+Result.get("/deteksi", trufflehogController.getAllRepo);
+Result.get("/deteksi/:id", trufflehogController.getRepoByUser);
+Result.delete("/deteksi/:id", trufflehogController.deleteRepo);
+module.exports = Result;

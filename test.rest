@@ -1,5 +1,5 @@
 ###
-POST http://localhost:4000/api/auth/register
+POST http://localhost:3002/api/v1/users
 Content-Type: application/json
 
 {
@@ -11,7 +11,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:4000/api/detectt/deteksi
+POST http://localhost:3002/api/v1/deteksi
 Content-Type: application/json
 
 {
@@ -19,13 +19,13 @@ Content-Type: application/json
 }
 
 ###
-DELETE  http://localhost:4000/api/detectt/deleterepo/40
+DELETE  http://localhost:3002/api/v1/deteksi/40
 
 ###
-GET http://localhost:4000/api/detectt/repoUser/32
+GET http://localhost:3002/api/v1/deteksi/32
 
 ###
-GET http://localhost:4000/api/detectt/allrepos/125
+GET http://localhost:3002/api/v1/deteksi/125
 
 ###
-GET http://localhost:4000/api/auth/usersid/6
+GET http://localhost:3002/api/v1/users/6
