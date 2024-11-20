@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { query } = require("../config/db");
+require("dotenv").config();
 
 const { SECRET } = require("../config/db");
 
@@ -17,16 +18,39 @@ const ROLES_NAME = {
 };
 
 const getRegister = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
   try {
-    const roles = await query("SELECT id, name FROM user_roles");
-    res.json({ status: "ok", roles: roles });
+    const token = req.headers.authorization ? req.headers.authorization.split(" ")[1] : null;
+    if (!token) return res.status(401).json({ success: false, message: "Akses ditolak. Token tidak disediakan." });
+    jwt.verify(token, SECRET, async (err, decoded) => {
+      if (err) return res.status(403).json({ success: false, message: "Token tidak valid." });
+
+      const userExists = await query("SELECT * FROM users WHERE id = ?", [userId]);
+      res.json({ status: "ok", userId: userExists });
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to get role", status: "failed" });
   }
 });
 
+const authenticateToken = (req, res, next) => {
+  const token = req.headers.authorization ? req.headers.authorization.split(" ")[1] : null;
+  if (!token) return res.status(401).json({ success: false, message: "Akses ditolak. Token tidak disediakan." });
+
+  jwt.verify(token, SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ success: false, message: "Token tidak valid." });
+    req.user = decoded;
+    next();
+  });
+};
+
+// Controller
+
 const getAllUser = asyncHandler(async (req, res) => {
   try {
+    if (req.user.role !== ROLES_NAME.ADMIN) {
+      return res.status(403).json({ success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mengakses data pengguna." });
+    }
     const roles = await query("SELECT * FROM users");
     res.json({ status: "ok", roles: roles });
   } catch (error) {
@@ -75,6 +99,9 @@ const Register = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      data: {
+        ...req.body,
+      },
       message: "Registrasi berhasil!",
       redirect: "/login",
     });
@@ -102,11 +129,10 @@ const login = asyncHandler(async (req, res) => {
     if (user.length > 0) {
       const userData = user[0];
 
-      // Verifikasi password
       const isPasswordValid = await bcrypt.compare(req.body.password, userData.password);
 
       if (isPasswordValid) {
-        const token = await jwt.sign(
+        const token = jwt.sign(
           {
             fullname: userData.fullname,
             email: userData.email,
@@ -117,23 +143,24 @@ const login = asyncHandler(async (req, res) => {
           { expiresIn: "1h", algorithm: "HS256" }
         );
 
+        const { password, ...userWithoutPassword } = userData;
+
+        res.cookie("token", token, { httpOnly: true });
         res.json({
           success: true,
           message: "Login berhasil",
-          user: user,
+          user: userWithoutPassword,
           token: token,
-          access: userData.role === ROLES_NAME.ADMIN ? ROLES_NUMBER.ADMIN : ROLES_NUMBER.CLIENT,
+          access: userWithoutPassword.role === ROLES_NAME.ADMIN ? ROLES_NUMBER.ADMIN : ROLES_NUMBER.CLIENT,
         });
       } else {
-        // Password salah, beri respons dengan status 400
         res.status(400).json({ success: false, message: "Email atau Password salah!" });
       }
     } else {
-      // Pengguna tidak ditemukan, beri respons dengan status 400
       res.status(400).json({ success: false, message: "Email atau Password salah!" });
     }
   } catch (error) {
-    console.log(error);
+    console.error("Login Error:", error);
     res.status(500).json({
       success: false,
       message: "Server Error",
@@ -146,4 +173,5 @@ module.exports = {
   getAllUser,
   Register,
   login,
+  authenticateToken,
 };

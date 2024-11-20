@@ -1,0 +1,31 @@
+###
+POST http://localhost:4000/api/auth/register
+Content-Type: application/json
+
+{
+    "fullname": "kurdin",
+    "email": "kurdin@gmail.com",
+    "password": "kurdin123",
+    "confirm_password": "kurdin123",
+    "role_id": 1
+}
+
+###
+POST http://localhost:4000/api/detectt/deteksi
+Content-Type: application/json
+
+{
+    "url": "https://github.com/billnababan/be-trafflehog"
+}
+
+###
+DELETE  http://localhost:4000/api/detectt/deleterepo/40
+
+###
+GET http://localhost:4000/api/detectt/repoUser/32
+
+###
+GET http://localhost:4000/api/detectt/allrepos/125
+
+###
+GET http://localhost:4000/api/auth/usersid/6

@@ -1,5 +1,7 @@
 const { query } = require("../config/db");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const { fileDir } = require("../file_handler.cjs");
 
 const asyncHandler = require("express-async-handler");
 
@@ -17,12 +19,10 @@ const updateUser = asyncHandler(async (req, res) => {
       });
     }
 
-    // Jika ada file gambar profil yang diunggah
     if (req.file) {
-      image = req.file.filename; // Mendapatkan nama file gambar profil baru
+      image = req.file.filename;
     }
 
-    // Update user data
     const updateUserQuery = `
       UPDATE users
       SET fullname = ?, email = ?, image = ?, role_id = ?
@@ -52,11 +52,11 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
-const deleteUser = asyncHandler(async (req, res) => {
+const updateUserForgetPassword = asyncHandler(async (req, res) => {
   try {
-    const userId = req.params.id; // Assuming you are passing user ID as a route parameter
+    const userId = req.params.id;
+    const { password, newPassword, role_id } = req.body;
 
-    // Check if the user exists
     const userExists = await query("SELECT * FROM users WHERE id = ?", [userId]);
     if (userExists.length === 0) {
       return res.status(404).json({
@@ -65,7 +65,48 @@ const deleteUser = asyncHandler(async (req, res) => {
       });
     }
 
-    // Delete user
+    // Update user data
+    const updateUserQuery = `
+      UPDATE users
+      SET  role_id = ?
+      ${newPassword ? ", password = ?" : ""} 
+      WHERE id = ?
+    `;
+    const updateUserParams = [role_id];
+    if (newPassword) {
+      const salt = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash(newPassword, salt);
+      updateUserParams.push(hashPassword);
+    }
+    updateUserParams.push(userId);
+
+    await query(updateUserQuery, updateUserParams);
+
+    res.json({
+      success: true,
+      message: "Update Password User is successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating user",
+    });
+  }
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const userExists = await query("SELECT * FROM users WHERE id = ?", [userId]);
+    if (userExists.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     await query("DELETE FROM users WHERE id = ?", [userId]);
 
     res.json({
@@ -82,6 +123,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  updateUserForgetPassword,
   deleteUser,
   updateUser,
 };
